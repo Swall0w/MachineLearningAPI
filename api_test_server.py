@@ -5,9 +5,11 @@ from chainercv.links import SSD300
 from chainercv import utils
 import os
 import socket
-from skimage import io
+from skimage import io as skio
 import json
 import base64
+import io
+import zlib
 
 def arg():
     parser = argparse.ArgumentParser()
@@ -34,12 +36,30 @@ class Server(object):
             print('waiting for connections...')
             clientsock, client_address = self.serversock.accept()
             while True:
-                rcvmsg = clientsock.recv(4096 * 30)
-                if not rcvmsg:
-                    break
+                with io.BytesIO() as f:
+                    while True:
+                        string = clientsock.recv(512)
+                        print(string)
+                        if not string:
+                            break
+                        f.write(string)
+#                    print(f)
+                    rcvmsg = zlib.decompress(f.getvalue())
+#                rcvmsg = bytes()
+#                while True:
+#                    string = clientsock.recv(512)
+#                    print(string)
+#                    if not string:
+#                        break
+#                    rcvmsg += string
+#                if not rcvmsg:
+#                    break
+#                rcvmsg = clientsock.recv(4096 * 30)
+#                if not rcvmsg:
+#                    break
 
                 json_str = rcvmsg.decode('utf-8')
-                print(json_str)
+#                print(json_str)
                 print(len(json_str))
                 json_data = json.loads(json_str)
                 send_data = {}
@@ -76,8 +96,8 @@ class WeightServer(Server):
         print(data['frame'])
         print(data['img'])
         img = base64.b64decode(data['img'].encode('utf-8'))
-        img = cStringIO.StringIO(img)
-        img = io.imread(img)
+        img = StringIO(img)
+        img = skio.imread(img)
         img = img.transpose(2, 0, 1)
 
         print('image shape: {}'.format(img.shape))

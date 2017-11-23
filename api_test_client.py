@@ -5,9 +5,11 @@ from chainercv.links import SSD300
 from chainercv import utils
 import os
 import socket
-from skimage import io
+#from skimage import io
 import json
 import base64
+from io import StringIO, BytesIO
+import zlib
 
 
 def arg():
@@ -41,9 +43,23 @@ def main():
     print(len(str(img_json)))
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((args.host, args.port))
-    client.send(img_json.encode('utf-8'))
+    img_json = img_json.encode('utf-8')
+#    for index in range(0, len(img_json), 512):
+#        try:
+#            string = img_json[index: index+512]
+#        except:
+#            string = img_json[index:]
+#        client.send(string)
+    while True:
+#        client.send(img_json.encode('utf-8'))
+        with BytesIO(zlib.compress(img_json)) as f:
+            string = f.readline(512)
+            if not string:
+                break
+            print(string)
+            client.send(string)
 
-    response = client.recv(4096*30).decode('utf-8')
+    response = client.recv(4096).decode('utf-8')
     print(response)
 
 
