@@ -32,7 +32,6 @@ def main():
         encoded_string = base64.b64encode(image_file.read())
         print(type(encoded_string))
 
-#    import sys; sys.exit()
     senddict['img'] = encoded_string.decode('utf-8')
 
     if args.verbose:
@@ -40,24 +39,12 @@ def main():
     img_json = json.dumps(senddict)
 
 
-    print(len(str(img_json)))
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((args.host, args.port))
     img_json = img_json.encode('utf-8')
-#    for index in range(0, len(img_json), 512):
-#        try:
-#            string = img_json[index: index+512]
-#        except:
-#            string = img_json[index:]
-#        client.send(string)
-    while True:
-#        client.send(img_json.encode('utf-8'))
-        with BytesIO(zlib.compress(img_json)) as f:
-            string = f.readline(512)
-            if not string:
-                break
-            print(string)
-            client.send(string)
+
+    status = client.sendall(img_json)
+    print('byte: {},  status: {}'.format(len(img_json), status))
 
     response = client.recv(4096).decode('utf-8')
     print(response)
