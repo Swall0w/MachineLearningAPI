@@ -24,15 +24,24 @@ def main():
             if not rcvmsg:
                 break
 
-            json_data = rcvmsg.decode('utf-8')
-            print(json_data)
-            json_data = json.loads(json_data)
-            ret = {}
-            ret['frame'] = str(int(json_data['frame']) + 1)
-            ret['img'] = 'fuga' * int(json_data['frame'])
-            ret = json.dumps(ret).encode('utf-8')
-            clientsock.sendall(ret)
-            print('done')
+            try:
+                json_data = rcvmsg.decode('utf-8')
+                print(json_data)
+                json_data = json.loads(json_data)
+                ret = {}
+                ret['frame'] = str(int(json_data['frame']) + 1)
+                ret['img'] = 'fuga' * int(json_data['frame'])
+            except:
+                import traceback
+                error = traceback.format_exc()
+                print(error)
+                ret = {}
+                ret['frame'] = str(0)
+                ret['img'] = error
+            finally:
+                ret = json.dumps(ret).encode('utf-8')
+                clientsock.sendall(ret)
+                print('done')
         clientsock.close()
         print('closed')
 
