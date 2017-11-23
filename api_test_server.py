@@ -35,54 +35,40 @@ class Server(object):
         while True:
             print('waiting for connections...')
             clientsock, client_address = self.serversock.accept()
+            rcvdata = b''
             while True:
-                with io.BytesIO() as f:
-                    while True:
-                        string = clientsock.recv(512)
-                        print(string)
-                        if not string:
-                            break
-                        f.write(string)
-#                    print(f)
-                    rcvmsg = zlib.decompress(f.getvalue())
-#                rcvmsg = bytes()
+#                rcvdata = b''
 #                while True:
-#                    string = clientsock.recv(512)
-#                    print(string)
-#                    if not string:
-#                        break
-#                    rcvmsg += string
-#                if not rcvmsg:
-#                    break
-#                rcvmsg = clientsock.recv(4096 * 30)
-#                if not rcvmsg:
-#                    break
+                chunk = clientsock.recv(4096)
+                if not chunk:
+                    break
+                rcvdata += chunk
+            print(len(rcvdata))
 
-                json_str = rcvmsg.decode('utf-8')
-#                print(json_str)
-                print(len(json_str))
-                json_data = json.loads(json_str)
-                send_data = {}
-                status_data = {}
-                try:
-                    data = self.predict(json_data)
-                    status_data['code'] = str(200)
-                    status_data['details'] = ''
+            json_str = rcvdata.decode('utf-8')
+            print(len(json_str))
+            json_data = json.loads(json_str)
+            send_data = {}
+            status_data = {}
+            try:
+                data = self.predict(json_data)
+                status_data['code'] = str(200)
+                status_data['details'] = ''
 
-                except:
-                    import traceback
-                    error = traceback.format_exc()
-                    data = {}
-                    data['None'] = []
-                    status_data['code'] = str(400)
-                    status_data['details'] = error
-                    print(error)
+            except:
+                import traceback
+                error = traceback.format_exc()
+                data = {}
+                data['None'] = []
+                status_data['code'] = str(400)
+                status_data['details'] = error
+                print(error)
 
-                finally:
-                    send_data["status"] = status_data
-                    send_data["data"] = data
-                    converted_data = json.dumps(send_data, ensure_ascii=False)
-                    clientsock.sendall(converted_data.encode('utf-8'))
+            finally:
+                send_data["status"] = status_data
+                send_data["data"] = data
+                converted_data = json.dumps(send_data, ensure_ascii=False)
+                clientsock.sendall(converted_data.encode('utf-8'))
             clientsock.close()
 
 class WeightServer(Server):
@@ -92,11 +78,13 @@ class WeightServer(Server):
 
     def predict(self, data):
         # data must be in json format.
-        print(data)
+#        print(data)
         print(data['frame'])
+        print(type(data['img']))
         print(data['img'])
         img = base64.b64decode(data['img'].encode('utf-8'))
-        img = StringIO(img)
+        print(type(img))
+        img = io.BytesIO(img)
         img = skio.imread(img)
         img = img.transpose(2, 0, 1)
 
@@ -137,19 +125,6 @@ def main():
 
     ws =  WeightServer(host=args.host, port=args.port, model=model)
     ws.run()
-
-
-#    img = io.imread(args.img)
-#    img = img.transpose(2, 0, 1)
-#    print(img)
-#    print(img.shape)
-#    bboxes, labels, scores = model.predict([img])
-#    bbox, label, score = bboxes[0], labels[0], scores[0]
-#    print(bboxes)
-#    print(voc_bbox_label_names[int(label)])
-#    print(score)
-#    print(type(score))
-#    print(voc_bbox_label_names)
 
 
 if __name__ == '__main__':
