@@ -8,6 +8,8 @@ from skimage import io as skio
 import json
 import base64
 import io
+import threading
+import _thread
 
 def arg():
     parser = argparse.ArgumentParser()
@@ -24,51 +26,55 @@ class Server(object):
         self.serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serversock.bind((host, port))
-        self.serversock.listen(10)
 
     def predict(self, data):
         raise NotImplementedError
 
+    def predict_threading(self, clientsock, client_address):
+        rcvdata = b''
+        i = 0
+        max_length = int(clientsock.recv(512).decode('utf-8'))
+        print('Got max length of bytes: {}'.format(max_length))
+        while max_length > len(rcvdata):
+            chunk = clientsock.recv(4096)
+            if not chunk:
+                break
+            rcvdata += chunk
+            i+=1
+
+        print('Got all data')
+        json_str = rcvdata.decode('utf-8')
+        json_data = json.loads(json_str)
+        send_data = {}
+        status_data = {}
+        try:
+            data = self.predict(json_data)
+            status_data['code'] = str(200)
+            status_data['details'] = ''
+
+        except:
+            import traceback
+            error = traceback.format_exc()
+            data = {}
+            data['None'] = []
+            status_data['code'] = str(400)
+            status_data['details'] = error
+            print(error)
+
+        finally:
+            send_data["status"] = status_data
+            send_data["data"] = data
+            converted_data = json.dumps(send_data, ensure_ascii=False)
+            clientsock.sendall(converted_data.encode('utf-8'))
+        clientsock.close()
+
     def run(self):
+        self.serversock.listen(10)
         while True:
             print('waiting for connections...')
             clientsock, client_address = self.serversock.accept()
-            rcvdata = b''
-            i = 0
-            max_length = int(clientsock.recv(512).decode('utf-8'))
-            print('Got max length of bytes: {}'.format(max_length))
-            while max_length > len(rcvdata):
-                chunk = clientsock.recv(4096)
-                if not chunk:
-                    break
-                rcvdata += chunk
-                i+=1
-
-            print('Got all data')
-            json_str = rcvdata.decode('utf-8')
-            json_data = json.loads(json_str)
-            send_data = {}
-            status_data = {}
-            try:
-                data = self.predict(json_data)
-                status_data['code'] = str(200)
-                status_data['details'] = ''
-
-            except:
-                import traceback
-                error = traceback.format_exc()
-                data = {}
-                data['None'] = []
-                status_data['code'] = str(400)
-                status_data['details'] = error
-                print(error)
-
-            finally:
-                send_data["status"] = status_data
-                send_data["data"] = data
-                converted_data = json.dumps(send_data, ensure_ascii=False)
-                clientsock.sendall(converted_data.encode('utf-8'))
-            clientsock.close()
+            print('[-] Connected to {}: {}'.format(client_address[0], client_address[1]))
+            threading.Thread(target=self.predict_threading, args=(clientsock, client_address)).start()
 
 class WeightServer(Server):
     def __init__(self, host, port, model):
