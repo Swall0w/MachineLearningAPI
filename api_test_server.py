@@ -72,6 +72,7 @@ class Server(object):
             send_data["data"] = data
             converted_data = json.dumps(send_data, ensure_ascii=False)
             clientsock.sendall(converted_data.encode('utf-8'))
+        print('[-] Closed {}: {}'.format(client_address[0], client_address[1]))
         clientsock.close()
 
     def run(self):
