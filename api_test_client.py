@@ -1,16 +1,7 @@
 import argparse
-import chainer
-from chainercv.datasets import voc_bbox_label_names
-from chainercv.links import SSD300
-from chainercv import utils
-import os
 import socket
-#from skimage import io
 import json
 import base64
-from io import StringIO, BytesIO
-import zlib
-import math
 
 
 def arg():
@@ -44,11 +35,11 @@ def main():
     client.connect((args.host, args.port))
     img_json = img_json.encode('utf-8')
 
-    num = math.ceil(len(img_json)/ args.length) + 1
+    length_bytes = len(img_json)
 
-    client.send(str(num).encode('utf-8'))
+    client.send(str(length_bytes).encode('utf-8'))
     status = client.sendall(img_json)
-    print('num: {}, byte: {},  status: {}'.format(num, len(img_json), status))
+    print('Send data... byte: {},  status: {}'.format(length_bytes, status))
 
     response = client.recv(4096).decode('utf-8')
     print(response)
