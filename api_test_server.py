@@ -45,10 +45,8 @@ class Server(object):
                     break
                 rcvdata += chunk
                 i+=1
-            print(len(rcvdata))
 
             json_str = rcvdata.decode('utf-8')
-            print(len(json_str))
             json_data = json.loads(json_str)
             send_data = {}
             status_data = {}
@@ -80,7 +78,6 @@ class WeightServer(Server):
 
     def predict(self, data):
         # data must be in json format.
-        print(data['frame'])
         img = base64.b64decode(data['img'].encode('utf-8'))
         img = io.BytesIO(img)
         img = skio.imread(img)
@@ -106,6 +103,7 @@ class WeightServer(Server):
             object_list.append(object_dict)
 
         result_data['object'] = object_list
+        return result_data
 
 
 def main():
