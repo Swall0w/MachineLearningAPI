@@ -9,7 +9,6 @@ import json
 import base64
 import io
 import threading
-import _thread
 
 def arg():
     parser = argparse.ArgumentParser()
@@ -31,19 +30,26 @@ class Server(object):
         raise NotImplementedError
 
     def predict_threading(self, clientsock, client_address):
-        rcvdata = b''
-        i = 0
-        max_length = int(clientsock.recv(512).decode('utf-8'))
-        print('Got max length of bytes: {}'.format(max_length))
-        while max_length > len(rcvdata):
-            chunk = clientsock.recv(4096)
-            if not chunk:
+        buf = b''
+        max_length = None
+        while True:
+            dat = clientsock.recv(4096)
+            if not dat:
                 break
-            rcvdata += chunk
-            i+=1
+            buf += dat
 
-        print('Got all data')
-        json_str = rcvdata.decode('utf-8')
+            if max_length is None:
+                if ':'.encode('utf-8') in buf:
+                    length, ignored, buf = buf.partition(':'.encode('utf-8'))
+                    max_length = int(length.decode('utf-8'))
+                else:
+                    pass
+
+            elif max_length <= len(buf):
+                break
+            else:
+                pass
+        json_str = buf.decode('utf-8')
         json_data = json.loads(json_str)
         send_data = {}
         status_data = {}
@@ -98,9 +104,7 @@ class WeightServer(Server):
         for num, bbox in enumerate(bboxes[0]):
             object_dict = {}
             bndbox = {}
-            print('bbox: {}'.format(bbox))
-            print('label: {}'.format(voc_bbox_label_names[int(labels[0][num])]))
-            print('score: {}'.format(scores[0][num]))
+            print('label: {}, score {}, bbox: {}'.format(voc_bbox_label_names[int(labels[0][num])], scores[0][num], bbox))
             object_dict['name'] = voc_bbox_label_names[int(labels[0][num])]
             object_dict['prob'] = str(float(scores[0][num]))
             bndbox['ymin'] = str(int(bbox[0]))
