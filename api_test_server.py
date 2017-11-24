@@ -36,13 +36,15 @@ class Server(object):
             print('waiting for connections...')
             clientsock, client_address = self.serversock.accept()
             rcvdata = b''
-            while True:
-#                rcvdata = b''
-#                while True:
+            i = 0
+            max_iter = int(clientsock.recv(512).decode('utf-8'))
+            print('Got max iteration number: {}'.format(max_iter))
+            while max_iter >= i:
                 chunk = clientsock.recv(4096)
                 if not chunk:
                     break
                 rcvdata += chunk
+                i+=1
             print(len(rcvdata))
 
             json_str = rcvdata.decode('utf-8')
@@ -78,12 +80,8 @@ class WeightServer(Server):
 
     def predict(self, data):
         # data must be in json format.
-#        print(data)
         print(data['frame'])
-        print(type(data['img']))
-        print(data['img'])
         img = base64.b64decode(data['img'].encode('utf-8'))
-        print(type(img))
         img = io.BytesIO(img)
         img = skio.imread(img)
         img = img.transpose(2, 0, 1)
