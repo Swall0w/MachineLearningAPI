@@ -11,7 +11,6 @@ def arg():
     parser.add_argument('--img', nargs=1, type=str, help='image files')
     parser.add_argument('--verbose', action='store_true', default=False,
                         help='debug mode if this flag is set (default: False)')
-    parser.add_argument('--length', '-l', default=4096, type=int, help='packet length')
     return parser.parse_args()
 
 
@@ -37,8 +36,8 @@ def main():
 
     length_bytes = len(img_json)
 
-    client.send(str(length_bytes).encode('utf-8'))
-    status = client.sendall(img_json)
+    header = (str(length_bytes)+':').encode('utf-8')
+    status = client.sendall(header+img_json)
     print('Send data... byte: {},  status: {}'.format(length_bytes, status))
 
     response = client.recv(4096).decode('utf-8')
