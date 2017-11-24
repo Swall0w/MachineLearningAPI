@@ -3,13 +3,11 @@ import chainer
 from chainercv.datasets import voc_bbox_label_names
 from chainercv.links import SSD300
 from chainercv import utils
-import os
 import socket
 from skimage import io as skio
 import json
 import base64
 import io
-import zlib
 
 def arg():
     parser = argparse.ArgumentParser()
@@ -38,16 +36,15 @@ class Server(object):
             rcvdata = b''
             i = 0
             max_length = int(clientsock.recv(512).decode('utf-8'))
-            print('Got max length of data: {}'.format(max_length))
+            print('Got max length of bytes: {}'.format(max_length))
             while max_length > len(rcvdata):
                 chunk = clientsock.recv(4096)
                 if not chunk:
                     break
                 rcvdata += chunk
-                print(i, len(chunk), len(rcvdata))
                 i+=1
 
-            print('got all data')
+            print('Got all data')
             json_str = rcvdata.decode('utf-8')
             json_data = json.loads(json_str)
             send_data = {}
@@ -96,7 +93,8 @@ class WeightServer(Server):
             object_dict = {}
             bndbox = {}
             print('bbox: {}'.format(bbox))
-            print('label: {}'.format(int(labels[0][num])))
+            print('label: {}'.format(voc_bbox_label_names[int(labels[0][num])]))
+            print('score: {}'.format(scores[0][num]))
             object_dict['name'] = voc_bbox_label_names[int(labels[0][num])]
             object_dict['prob'] = str(float(scores[0][num]))
             bndbox['ymin'] = str(int(bbox[0]))
