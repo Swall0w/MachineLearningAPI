@@ -37,15 +37,17 @@ class Server(object):
             clientsock, client_address = self.serversock.accept()
             rcvdata = b''
             i = 0
-            max_iter = int(clientsock.recv(512).decode('utf-8'))
-            print('Got max iteration number: {}'.format(max_iter))
-            while max_iter >= i:
+            max_length = int(clientsock.recv(512).decode('utf-8'))
+            print('Got max length of data: {}'.format(max_length))
+            while max_length > len(rcvdata):
                 chunk = clientsock.recv(4096)
                 if not chunk:
                     break
                 rcvdata += chunk
+                print(i, len(chunk), len(rcvdata))
                 i+=1
 
+            print('got all data')
             json_str = rcvdata.decode('utf-8')
             json_data = json.loads(json_str)
             send_data = {}
@@ -90,15 +92,17 @@ class WeightServer(Server):
         result_data = {}
         object_list = []
         result_data['frame'] = data['frame']
-        for num, bbox in enumerate(bboxes):
+        for num, bbox in enumerate(bboxes[0]):
             object_dict = {}
             bndbox = {}
-            object_dict['name'] = voc_bbox_label_names[int(labels[num])]
-            object_dict['prob'] = str(float(scores[num]))
-            bndbox['ymin'] = str(int(bbox[0][0]))
-            bndbox['xmin'] = str(int(bbox[0][1]))
-            bndbox['ymax'] = str(int(bbox[0][2]))
-            bndbox['xmax'] = str(int(bbox[0][3]))
+            print('bbox: {}'.format(bbox))
+            print('label: {}'.format(int(labels[0][num])))
+            object_dict['name'] = voc_bbox_label_names[int(labels[0][num])]
+            object_dict['prob'] = str(float(scores[0][num]))
+            bndbox['ymin'] = str(int(bbox[0]))
+            bndbox['xmin'] = str(int(bbox[1]))
+            bndbox['ymax'] = str(int(bbox[2]))
+            bndbox['xmax'] = str(int(bbox[3]))
             object_dict['bndbox'] = bndbox
             object_list.append(object_dict)
 
