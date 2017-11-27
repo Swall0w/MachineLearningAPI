@@ -71,7 +71,7 @@ class Server(object):
             send_data["status"] = status_data
             send_data["data"] = data
             converted_data = json.dumps(send_data, ensure_ascii=False)
-            clientsock.sendall(converted_data.encode('utf-8'))
+            clientsock.sendall((converted_data+'\x00').encode('utf-8'))
         print('[-] Closed {}: {}'.format(client_address[0], client_address[1]))
         clientsock.close()
 
