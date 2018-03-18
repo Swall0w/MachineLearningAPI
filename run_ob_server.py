@@ -21,7 +21,6 @@ def load_model():
 
 def prepare_image(image):
     img = image.transpose(2, 0, 1)
-    print('preprocessing')
     return img
 
 
@@ -36,8 +35,6 @@ def predict():
         if flask.request.files.get("image"):
             # read the image in PIL format
             image = flask.request.files["image"].read()
-            print('image from flask')
-            #image = Image.open(io.BytesIO(image))
             image = skio.imread(io.BytesIO(image))
 
             # preprocess the image and prepare it for classification
@@ -45,26 +42,22 @@ def predict():
 
             # classify the input image and then initialize the list
             # of predictions to return to the client
-#            preds = model.predict([image])
-            print('predict')
             bboxes, labels, scores = model.predict([image])
-            print('predicted')
-            bbox, label, score = bboxes[0], labels[0], scores[0]
-            print(type(bbox))
 
-#            results = imagenet_utils.decode_predictions(preds)
             data["predictions"] = []
 
             # loop over the results and add them to the list of
             # returned predictions
-            for index, box in enumerate(bbox):
-                r = {"label": label[index],
-                     "bbox": box,
-                     "probability": float(score[index])
+            for index, bbox in enumerate(bboxes[0]):
+                r = {"label": voc_bbox_label_names[int(labels[0][index])],
+                     "bbox": {"ymin": int(bbox[0]),
+                              "xmin": int(bbox[1]),
+                              "ymax": int(bbox[2]),
+                              "xmax": int(bbox[3])},
+                     "probability": float(scores[0][index])
                      }
                 data["predictions"].append(r)
 
-            print(data["predictions"])
             # indicate that the request was a success
             data["success"] = True
 
