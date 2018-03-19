@@ -42,7 +42,6 @@ def imgcat(data, width='auto', height='auto', preserveAspectRatio=False, inline=
 
     buf += b'\n'
 
-    print(buf)
     stdout.buffer.write(buf)
     stdout.flush()
 
