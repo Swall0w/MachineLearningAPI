@@ -2,6 +2,7 @@ import requests
 import imgcat
 import io
 from PIL import Image, ImageDraw
+import argparse
 
 
 def viz_bbox(image, outputs):
@@ -16,8 +17,18 @@ def viz_bbox(image, outputs):
                   text, fill='black')
     return image
 
+
+def arg():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', default='127.0.0.1', type=str)
+    parser.add_argument('--port', type=int, default=5000)
+    return  parser.parse_args()
+
+
 def main():
-    REST_API_URL = "http://localhost:5000/predict"
+    args = arg()
+    #REST_API_URL = "http://localhost:5000/predict"
+    REST_API_URL = "http://{}:{}/predict".format(args.host, args.port)
     IMAGE_PATH = "dog.jpg"
 
     with open(IMAGE_PATH, "rb") as f:
