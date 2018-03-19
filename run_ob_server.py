@@ -1,6 +1,6 @@
 import chainer
 from chainercv.datasets import voc_bbox_label_names
-from chainercv.links import SSD300
+from chainercv.links import SSD300, SSD512
 from chainercv import utils
 from PIL import Image
 import numpy as np
@@ -14,7 +14,7 @@ model = None
 
 def load_model():
     global model
-    model = SSD300(
+    model = SSD512(
         n_fg_class=len(voc_bbox_label_names),
         pretrained_model='voc0712')
 
@@ -49,7 +49,7 @@ def predict():
             # loop over the results and add them to the list of
             # returned predictions
             for index, bbox in enumerate(bboxes[0]):
-                r = {"label": voc_bbox_label_names[int(labels[0][index])],
+                r = {"class": voc_bbox_label_names[int(labels[0][index])],
                      "bbox": {"ymin": int(bbox[0]),
                               "xmin": int(bbox[1]),
                               "ymax": int(bbox[2]),
