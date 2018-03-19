@@ -7,6 +7,12 @@ import numpy as np
 import flask
 import io
 from skimage import io as skio
+import argparse
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--gpu', type=int, default=-1)
+args = parser.parse_args()
 
 
 app = flask.Flask(__name__)
@@ -17,6 +23,7 @@ def load_model():
     model = SSD512(
         n_fg_class=len(voc_bbox_label_names),
         pretrained_model='voc0712')
+
 
 
 def prepare_image(image):
