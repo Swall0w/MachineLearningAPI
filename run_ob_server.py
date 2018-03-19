@@ -23,7 +23,9 @@ def load_model():
     model = SSD512(
         n_fg_class=len(voc_bbox_label_names),
         pretrained_model='voc0712')
-
+    if args.gpu >=0:
+        chainer.cuda.get_device(args.gpu).use()
+        model.to_gpu(args.gpu)
 
 
 def prepare_image(image):
